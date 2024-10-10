@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MannMitra Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e5ddd5; /* Light background */
+            margin: 0;
+            padding: 20px;
+        }
+        #chat-container {
+            max-width: 600px;
+            margin: auto;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        #chat-header {
+            background-color: #007bff; /* Header color */
+            color: white;
+            padding: 15px;
+            text-align: left; /* Align header to the left */
+            font-size: 1.5em; /* Header font size */
+        }
+        #chat {
+            height: 400px;
+            overflow-y: auto; /* Only vertical scrolling */
+            padding: 10px;
+        }
+        #chat::-webkit-scrollbar {
+            width: 8px; /* Chrome/Safari */
+        }
+        #chat::-webkit-scrollbar-thumb {
+            background-color: #ccc; /* Scrollbar color */
+            border-radius: 10px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 20px; /* Rounded message bubbles */
+            max-width: 80%;
+            position: relative; /* For pseudo-elements */
+            word-wrap: break-word; /* Wrap long words */
+        }
+        .user-message {
+            background-color: #007bff; /* Telegram-like blue */
+            color: white;
+            text-align: right; /* Align text to right for user messages */
+            margin-left: auto; /* Align to the right */
+        }
+        .bot-message {
+            background-color: #f1f0f0; /* Light gray for bot messages */
+            text-align: left; /* Align text to left for bot messages */
+            margin-right: auto; /* Align to the left */
+        }
+        input[type="text"] {
+            width: calc(100% - 100px); /* Adjust width for button space */
+            padding: 10px; /* Normal padding for usability */
+            border-radius: 20px; /* Rounded corners */
+            border: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 10px; /* Space above input box */
+        }
+        button {
+            padding: 10px; /* Normal padding for button */
+            border-radius: 20px; /* Rounded corners */
+            border: none;
+            background-color: #007bff; /* Telegram-like blue */
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition */
+        }
+        button:hover {
+            background-color: #0056b3; /* Darker shade on hover */
+        }
+        .message-time {
+            font-size:.7em;
+            color:#888;
+            position:absolute;
+        }
+        .user-message .message-time {
+           right: 10px; /* Positioning inside the user message bubble on the right */
+           bottom:-15px;
+       }
+       .bot-message .message-time {
+           left: 10px; /* Positioning inside the bot message bubble on the left */
+           bottom:-15px;
+       }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-header">MannMitra</div> <!-- Chat header aligned to left -->
+    <div id="chat"></div>
+    <div class="typing-indicator" id="typing-indicator" style="display:none;">Bot is typing...</div>
+    <div style="display:flex; justify-content:flex-end;">
+      <input id="user-input" type="text" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const inputField = document.getElementById('user-input');
+        const userMessage = inputField.value;
+
+        // Check if the input is empty
+        if (!userMessage.trim()) return;
+
+        // Display user's message
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'message user-message';
+
+        // Include timestamp in user's message (without seconds)
+        const userTimestamp = new Date().toLocaleTimeString([], { hour12:true, minute:'2-digit', hour:'2-digit' });
+        userMessageDiv.innerHTML = `${userMessage} <span class="message-time">(${userTimestamp})</span>`;
+        document.getElementById('chat').appendChild(userMessageDiv);
+
+        // Clear input field
+        inputField.value = '';
+
+        // Show typing indicator
+        const typingIndicator = document.getElementById('typing-indicator');
+        typingIndicator.style.display = 'block';
+
+        // Simulate a delay for bot response
+        setTimeout(async () => {
+           const response = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessage }),
+           });
+
+           const data = await response.json();
+
+           // Hide typing indicator
+           typingIndicator.style.display = 'none';
+
+           // Display bot's response
+           const botMessageDiv = document.createElement('div');
+           botMessageDiv.className = 'message bot-message';
+
+           // Include timestamp in bot's reply (without seconds)
+           const botTimestamp = new Date().toLocaleTimeString([], { hour12:true, minute:'2-digit', hour:'2-digit' });
+           botMessageDiv.innerHTML = `${data.response} <span class="message-time">(${botTimestamp})</span>`;
+
+           document.getElementById('chat').appendChild(botMessageDiv);
+
+           // Scroll to the bottom of the chat
+           document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+
+       }, 1000); // Simulated delay of one second
+   }
+</script>
+
+</body>
+</html>
